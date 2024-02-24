@@ -1,6 +1,6 @@
 const express = require('express');
 const statistics = require('./statistics.js');
-const metrics = require('./metrics.js');
+const { router: updateMetrics } = require('./metrics.js');
 
 const router = express.Router();
 const message = {
@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
 });
 
 router.use('/statistics', statistics);
-router.use('/metrics', metrics);
+router.use('/metrics', updateMetrics);
 
 module.exports = router;
 exports.message = message;

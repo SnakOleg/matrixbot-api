@@ -1,19 +1,33 @@
+// api/statistics.js
 const express = require('express');
 const router = express.Router();
-const statistics = require('../models/statistics.js');
+const { updateMetrics } = require('./metrics');
+
+let statisticsData = require('../models/statistics.js');
 
 const getStatistics = (req, res) => {
-  res.status(200).json(statistics);
+  try {
+    res.status(200).json(statisticsData);
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 const postStatistics = (req, res) => {
-  const { bot, shards, commandsStats } = req.body;
+  try {
+    const { bot, shards, commandsStats } = req.body;
+    statisticsData.bot = bot;
+    statisticsData.shards = shards;
+    statisticsData.commandsStats = commandsStats;
 
-  statistics.bot = bot;
-  statistics.shards = shards;
-  statistics.commandsStats = commandsStats;
+    updateMetrics(statisticsData);
 
-  res.status(201).json({ success: 'Statistics have been successfully posted' });
+    res.status(201).json({ success: 'Statistics have been successfully posted' });
+  } catch (error) {
+    console.error('Error posting statistics:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 router.get('/', getStatistics);

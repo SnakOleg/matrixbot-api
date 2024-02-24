@@ -41,42 +41,33 @@ const commandStatMetric = new Gauge({
 	registers: [registry]
 });
 
-const updateMetrics = (req, res, next) => {
+const updateMetrics = (data) => {
 	try {
-		const { bot, shards, commandsStats } = req.body;
+		totalGuildsMetric.set(data.bot.totalGuilds);
+		totalChannelsMetric.set(data.bot.totalChannels);
+		totalMembersMetric.set(data.bot.totalMembers);
+		totalPingMetric.set(data.bot.ping);
+		totalCommandsMetric.set(data.bot.cmds);
 
-		totalGuildsMetric.set(bot.totalGuilds);
-		totalChannelsMetric.set(bot.totalChannels);
-		totalMembersMetric.set(bot.totalMembers);
-		totalPingMetric.set(bot.ping);
-		totalCommandsMetric.set(bot.cmds);
-
-		if (commandsStats && Array.isArray(commandsStats.commandStats)) {
-			commandsStats.commandStats.forEach(commandStat => {
+		if (data.commandsStats && Array.isArray(data.commandsStats.commandStats)) {
+			data.commandsStats.commandStats.forEach(commandStat => {
 				commandStatMetric.labels(commandStat.name).set(commandStat.count);
 			});
 		}
-
-		next();
 	} catch (error) {
 		console.error('Error updating metrics:', error);
-		res.status(500).json({ error: 'Internal Server Error' });
 	}
 };
 
-router.use(express.json());
-
-router.get('/api/statistics', async (req, res) => {
+router.get('/', async (req, res) => {
 	try {
-		const metrics = await registry.metrics();
+		const metricsData = await registry.metrics();
 		res.set('Content-Type', registry.contentType);
-		res.send(metrics);
+		res.send(metricsData);
 	} catch (error) {
-		console.error('Error updating metrics:', error);
+		console.error('Error fetching metrics:', error);
 		res.status(500).json({ error: 'Internal Server Error' });
 	}
 });
 
-router.use(updateMetrics);
-
-module.exports = router;
+module.exports = { router, updateMetrics };
